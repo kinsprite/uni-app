@@ -90,7 +90,8 @@ module.exports = function generateComponent (compilation, jsonpFunction = 'webpa
           return
         }
 
-        const chunkName = name.replace('.js', '-create-component')
+        const isProduction = process.env.NODE_ENV === 'production'
+        const chunkName = isProduction ? `_mp$c_${curComponents.length}` : name.replace('.js', '-create-component')
 
         let moduleId = ''
         if (name.indexOf('node-modules') === 0) {
@@ -137,7 +138,7 @@ module.exports = function generateComponent (compilation, jsonpFunction = 'webpa
 `
             : `
 ;(${globalVar}["${jsonpFunction}"] = ${globalVar}["${jsonpFunction}"] || []).push([
-    '${chunkName}',
+    ['${chunkName}'],
     {
         '${chunkName}':(function(module, exports, __webpack_require__){
             __webpack_require__('${uniModuleId}')['createComponent'](__webpack_require__(${JSON.stringify(moduleId)}))
