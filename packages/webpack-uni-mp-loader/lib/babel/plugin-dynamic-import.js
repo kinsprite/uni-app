@@ -24,12 +24,25 @@ const babelTemplate = require('@babel/template').default
 // var test = function(resolve) {require.ensure([], () => resolve(require('../../components/test')),'components/test')}
 const buildRequireEnsure = babelTemplate(
   `var IMPORT_NAME = function(){
+    require.ensure([], function () { require(IMPORT_SOURCE) }, CHUNK_NAME);
+  }`)
+
+const buildRequireEnsureAsync = babelTemplate(
+  `var IMPORT_NAME = function(){
     __webpack_pap_remove_begin__;
     require.ensure([], function () { require(IMPORT_SOURCE) }, CHUNK_NAME);
     __webpack_pap_remove_end__;
   }`)
 
 function getRequireEnsure (name, source, chunkName) {
+  if (process.env.UNI_MP_FEATURE_ASYNC) {
+    return buildRequireEnsureAsync({
+      IMPORT_NAME: t.identifier(name),
+      IMPORT_SOURCE: t.stringLiteral(source),
+      CHUNK_NAME: t.stringLiteral(chunkName)
+    })
+  }
+
   return buildRequireEnsure({
     IMPORT_NAME: t.identifier(name),
     IMPORT_SOURCE: t.stringLiteral(source),

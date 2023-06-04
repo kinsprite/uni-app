@@ -28,6 +28,7 @@ function createUniMPPlugin () {
 }
 
 const createWxMpIndependentPlugins = require('@dcloudio/uni-mp-weixin/lib/createIndependentPlugin')
+const { createAsyncPkgPlugins, updateAsyncSplitChunks } = require('@dcloudio/uni-mp-weixin/lib/plugin/async')
 
 const UniTips = require('./tips')
 
@@ -175,6 +176,7 @@ module.exports = {
     }
 
     webpackConfig.optimization.splitChunks = require('../split-chunks')()
+    updateAsyncSplitChunks(webpackConfig)
 
     if (webpack.version[0] > 4) {
       webpackConfig.optimization.chunkIds = 'named'
@@ -192,7 +194,8 @@ module.exports = {
       new WebpackUniAppPlugin(),
       createUniMPPlugin(),
       new webpack.ProvidePlugin(getProvides()),
-      ...createWxMpIndependentPlugins()
+      ...createWxMpIndependentPlugins(),
+      ...createAsyncPkgPlugins()
     ]
 
     if ((process.env.UNI_SUBPACKGE || process.env.UNI_MP_PLUGIN) && process.env.UNI_SUBPACKGE !== 'main') {
