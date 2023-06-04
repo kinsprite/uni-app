@@ -53,13 +53,25 @@ function handleObjectExpression (declaration, path, state) {
   }
 }
 
+// Find async import() component, such as { MyAsyncComp: () => import('@/comps/my') }
+function isArrowAsyncComponentExpr (expr) {
+  return t.isArrowFunctionExpression(expr) && t.isCallExpression(expr.body) &&
+    t.isImport(expr.body.callee) && t.isStringLiteral(expr.body.arguments[0])
+}
+
+function getArrowAsyncComponentSource (expr) {
+  return expr.body.arguments[0].value
+}
+
 function handleComponentsObjectExpression (componentsObjExpr, path, state, prepend) {
   const properties = componentsObjExpr.properties
-    .filter(prop => t.isObjectProperty(prop) && t.isIdentifier(prop.value))
+    .filter(prop => t.isObjectProperty(prop) && (t.isIdentifier(prop.value) || isArrowAsyncComponentExpr(prop.value)))
   const components = parseComponents(properties.map(prop => {
+    const isSourceInValue = !t.isIdentifier(prop.value)
     return {
       name: prop.key.name || prop.key.value,
-      value: prop.value.name
+      value: isSourceInValue ? getArrowAsyncComponentSource(prop.value) : prop.value.name,
+      isSourceInValue
     }
   }), path)
   state.components = prepend ? components.concat(state.components) : components

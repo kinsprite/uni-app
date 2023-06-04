@@ -31,8 +31,27 @@ function parseComponents (names, path) {
   const dynamicImportMap = new Map()
   names.forEach(({
     name,
-    value
+    value,
+    isSourceInValue
   }) => {
+    if (isSourceInValue) {
+      let source = value
+      if (process.UNI_LIBRARIES && process.UNI_LIBRARIES.includes(source)) {
+        const componentName = hyphenate(name)
+        source = source + '/lib/' + componentName + '/' + componentName
+      }
+
+      const importId = value
+      const dynamicImportArray = dynamicImportMap.get(importId) || []
+      dynamicImportArray.push({
+        name,
+        value,
+        source
+      })
+      dynamicImportMap.set(importId, dynamicImportArray)
+      return
+    }
+
     const importDeclaration = findImportDeclaration(value, path)
     if (!importDeclaration) {
       throw new Error(uniI18n.__('mpLoader.componentReferenceErrorOnlySupportImport', {
@@ -59,7 +78,11 @@ function parseComponents (names, path) {
     dynamicImportArray.forEach((dynamicImport) => {
       components.push(dynamicImport)
     })
-    importDeclaration.remove()
+
+    // remove normal 'import xx from 'xx' parentPath. except import('xxx') string
+    if (importDeclaration.remove) {
+      importDeclaration.remove()
+    }
   }
   return components
 }
